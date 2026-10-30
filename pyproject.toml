@@ -1,0 +1,53 @@
+[project]
+name = "ckanext-cron"
+version = "0.0.1"
+description = "Cron job management from UI"
+readme = "README.md"
+authors = [
+    {name = "DataShades", email = "cherniavskyi.alexandr@linkdigital.com.au"}
+]
+license = {text = "AGPL"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+keywords = [ "CKAN", ]
+dependencies = [
+    "ckanext-tables>=2.0",
+    "cron-descriptor>=2.2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest-ckan", "ckanext-toolbelt", "requests-mock"]
+
+[project.urls]
+Homepage = "https://github.com/DataShades/ckanext-cron"
+
+[project.entry-points."ckan.plugins"]
+cron = "ckanext.cron.plugin:CronPlugin"
+
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+        "ignore::sqlalchemy.exc.SADeprecationWarning",
+        "ignore::sqlalchemy.exc.SAWarning",
+        "ignore::DeprecationWarning",
+]
+addopts = "--ckan-ini test.ini"
+markers = [
+        "without_pg_cron: the test doesn't need pg_cron, so it runs without it",
+]
+
+[tool.ruff]
+line-length = 127
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]

@@ -1,0 +1,60 @@
+version: 1
+groups:
+  - annotation: ckanext-cron
+    options:
+      - key: ckanext.cron.database_url
+        example: postgresql://ckan_default:pass@localhost/postgres
+        description: |
+          Connection URL of the database where the pg_cron extension is
+          installed (the one named by the `cron.database_name` setting of
+          PostgreSQL). It must be on the same PostgreSQL server as the CKAN
+          database. Defaults to `sqlalchemy.url`.
+
+      - key: ckanext.cron.worker.poll_interval
+        type: int
+        default: 30
+        description: |
+          Seconds between checks of the run queue by `ckan cron worker`. The
+          worker also wakes up on every NOTIFY sent by pg_cron, so this only
+          matters if a notification is missed.
+
+      - key: ckanext.cron.worker.timeout
+        type: int
+        default: 3600
+        description: |
+          Seconds a command may run before the worker kills it and marks the run
+          as failed.
+
+      - key: ckanext.cron.worker.executable
+        example: /usr/lib/ckan/default/bin/ckan
+        description: |
+          Path to the `ckan` executable that runs the commands. Defaults to the
+          `ckan` next to the Python interpreter of the worker, then to the one
+          on PATH.
+
+      - key: ckanext.cron.history_retention_days
+        type: int
+        default: 30
+        description: |
+          The "Purge old runs" action on the run history page deletes runs
+          older than this number of days.
+
+      - key: ckanext.cron.forbidden_commands
+        default: config-tool, datastore dump, db, generate, sass, translation
+        example: |
+          config-tool
+          db
+          user token
+        description: |
+          Commands that jobs may not run, separated by commas or newlines. Each
+          entry covers the subcommands that start with it, so `db` also forbids
+          `db upgrade`. The default keeps out commands that write files or code
+          on the server, or change the database schema, which a CKAN sysadmin
+          can't do otherwise. Set it to an empty value to allow them.
+
+      - key: ckanext.cron.allowed_commands
+        example: harvester run, search-index rebuild, cron call-action
+        description: |
+          If set, jobs may only run these commands, separated by commas or
+          newlines. Each entry covers the subcommands that start with it.
+          `ckanext.cron.forbidden_commands` still applies on top of it.

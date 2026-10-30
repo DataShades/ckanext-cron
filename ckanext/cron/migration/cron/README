@@ -1,0 +1,1 @@
+Database migrations of ckanext-cron. Apply them with: ckan db upgrade -p cron

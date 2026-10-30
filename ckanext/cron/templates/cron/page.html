@@ -1,0 +1,100 @@
+{% extends "page.html" %}
+
+{% block subtitle %}{{ page_title or _("Cron jobs") }}{% endblock %}
+
+{% block breadcrumb_content %}
+    <li class="{{ 'active' if request.endpoint == 'cron.jobs' }}">
+        <a href="{{ h.url_for('cron.jobs') }}">{{ _("Cron jobs") }}</a>
+    </li>
+    {% if request.endpoint == "cron.runs" %}
+        <li class="active"><a href="{{ h.url_for('cron.runs') }}">{{ _("Run history") }}</a></li>
+    {% endif %}
+{% endblock %}
+
+{% block secondary %}{% endblock %}
+
+{% block primary %}
+    <div class="primary col-12" role="main">
+        <div class="pt-2">
+            <ul class="nav nav-tabs mb-3">
+                <li class="nav-item">
+                    <a class="nav-link {{ 'active' if request.endpoint == 'cron.jobs' }}" href="{{ h.url_for('cron.jobs') }}">
+                        <i class="fa fa-clock" aria-hidden="true"></i> {{ _("Jobs") }}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ 'active' if request.endpoint == 'cron.runs' }}" href="{{ h.url_for('cron.runs') }}">
+                        <i class="fa fa-clock-rotate-left" aria-hidden="true"></i> {{ _("Run history") }}
+                    </a>
+                </li>
+            </ul>
+
+            {% block cron_info %}
+                {% if info %}
+                    <p class="text-muted small mb-3">
+                        {% trans version=info.version, database=info.database, username=info.username %}
+                            Scheduled by pg_cron {{ version }} in the <code>{{ database }}</code> database, as
+                            <code>{{ username }}</code>.
+                        {% endtrans %}
+                        {% if info.timezone %}
+                            {% trans timezone=info.timezone %}Schedules are in {{ timezone }}.{% endtrans %}
+                        {% else %}
+                            {% trans %}
+                                Schedules are in the <code>cron.timezone</code> of the server, GMT by default.
+                            {% endtrans %}
+                        {% endif %}
+                    </p>
+
+                    {% if info.missing_privileges %}
+                        <div class="alert alert-warning">
+                            {% trans username=info.username %}
+                                pg_cron doesn't let <code>{{ username }}</code> create or change jobs.
+                                A database superuser has to run this once, in the database where pg_cron is installed:
+                            {% endtrans %}
+                            <pre class="bg-body-tertiary p-2 mt-2 mb-0 text-wrap">{{ h.cron_grant_statement(info.username, info.missing_privileges) }}</pre>
+                        </div>
+                    {% endif %}
+
+                    {% if workers %}
+                        <p class="text-muted small mb-3">
+                            {{ _("Workers:") }}
+                            {% for worker in workers %}
+                                <code>{{ worker.name }}</code>
+                                {%- if worker.run_id %} {{ _("(running run {id})").format(id=worker.run_id) }}{% else %} {{ _("(waiting)") }}{% endif %}
+                                {%- if not loop.last %},{% endif %}
+                            {% endfor %}
+                        </p>
+
+                        {% if delayed_runs %}
+                            <div class="alert alert-info">
+                                {% trans count=delayed_runs, minutes=queue_delay_minutes %}
+                                    {{ count }} runs have been waiting in the queue for more than {{ minutes }} minutes
+                                    because every worker is busy. Start more workers to run commands in parallel.
+                                {% endtrans %}
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-warning">
+                            {% trans %}
+                                No cron worker is running, so runs are queued but never executed. Start one next to
+                                CKAN: <code>ckan cron worker</code>.
+                            {% endtrans %}
+                        </div>
+                    {% endif %}
+                {% endif %}
+            {% endblock %}
+
+            {% block primary_content_inner %}{% endblock %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    {% asset "tables/tables-js" %}
+{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    {% asset "tables/tables-css" %}
+{% endblock %}

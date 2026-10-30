@@ -1,0 +1,73 @@
+{% import "macros/form.html" as form %}
+
+<h2 class="h4">
+    {% if is_edit %}
+        {{ _("Edit job {name}").format(name=data.name) }}
+    {% else %}
+        {{ _("New job") }}
+    {% endif %}
+</h2>
+
+<form method="post" action="{{ h.url_for('cron.jobs') }}">
+    {{ h.csrf_input() }}
+    {{ form.hidden("form_action", value="update" if is_edit else "create") }}
+
+    {% if is_edit %}
+        {{ form.hidden("id", value=data.id) }}
+    {% endif %}
+
+    {% if is_edit and data.created %}
+        <p class="text-muted small">
+            {{ _("Created") }} {{ h.render_datetime(data.created, with_hours=true) }}
+            {%- if data.created_by %} {{ _("by") }} {{ h.linked_user(data.created_by) }}{% endif %}.
+            {{ _("Last changed") }} {{ h.render_datetime(data.modified, with_hours=true) }}
+            {%- if data.modified_by %} {{ _("by") }} {{ h.linked_user(data.modified_by) }}{% endif %}.
+        </p>
+    {% endif %}
+
+    {% if errors.message %}
+        <div class="alert alert-danger">{{ errors.message | join(", ") }}</div>
+    {% endif %}
+
+    {{ form.input("name", id="field-cron-name", label=_("Name"), value=data.name, placeholder=_("Harvest sources"), error=errors.name, attrs={"class": "form-control", "required": ""}, is_required=true) }}
+
+    {% call form.prepend("command", id="field-cron-command", label=_("Command"), prepend="ckan", value=data.command, placeholder="harvester run", error=errors.command, attrs={"class": "form-control font-monospace", "list": "cron-commands", "required": "", "autocomplete": "off", "spellcheck": "false"}, is_required=true) %}
+        <datalist id="cron-commands">
+            {% for command in h.cron_command_suggestions() %}
+                <option value="{{ command }}"></option>
+            {% endfor %}
+        </datalist>
+
+        {{ form.info(_("Arguments of the ckan command line tool, as in a crontab line without the config file option. The worker adds the config it runs with. To call a CKAN action, use: cron call-action ACTION key=value ...")) }}
+    {% endcall %}
+
+    {% call form.input("schedule", id="field-cron-schedule", label=_("Schedule"), value=data.schedule, placeholder="*/30 * * * *", error=errors.schedule, attrs={"class": "form-control font-monospace", "list": "cron-schedule-presets", "required": "", "autocomplete": "off"}, is_required=true) %}
+        <datalist id="cron-schedule-presets">
+            {% for preset in h.cron_schedule_presets() %}
+                <option value="{{ preset.value }}">{{ preset.text }}</option>
+            {% endfor %}
+        </datalist>
+
+        {% if data.schedule and h.cron_explain_schedule(data.schedule) %}
+            <div class="small mt-1"><i class="fa fa-circle-info" aria-hidden="true"></i> {{ h.cron_explain_schedule(data.schedule) }}</div>
+        {% endif %}
+
+        {{ form.info(_("Cron syntax (minute hour day-of-month month day-of-week), an interval from 1 to 59 seconds such as 30 seconds, or one of @hourly, @daily, @weekly, @monthly, @yearly. Use $ as the day of month for the last day of the month. Times are in {timezone}.").format(timezone=info.timezone or _("the cron.timezone of the server, GMT by default"))) }}
+    {% endcall %}
+
+    {{ form.checkbox("active", id="field-cron-active", label=_("Active"), value="on", checked=data.active if data.active is defined else true, error=errors.active) }}
+
+    {% call form.checkbox("allow_overlap", id="field-cron-allow-overlap", label=_("Allow overlapping runs"), value="on", checked=data.allow_overlap, error=errors.allow_overlap) %}
+        {{ form.info(_("By default a run is skipped while the previous one is still queued or running.")) }}
+    {% endcall %}
+
+    <div class="form-actions mb-2">
+        {% if is_edit %}
+            <a class="btn btn-light" href="{{ h.url_for('cron.jobs') }}">{{ _("Cancel") }}</a>
+        {% endif %}
+
+        <button class="btn btn-primary" type="submit">
+            {{ _("Save changes") if is_edit else _("Create job") }}
+        </button>
+    </div>
+</form>

@@ -1,0 +1,36 @@
+{% extends "cron/page.html" %}
+
+{% block cron_info %}{% endblock %}
+
+{% block primary_content_inner %}
+    <div class="alert alert-warning">
+        <h2 class="h5">{{ _("pg_cron is not available") }}</h2>
+        <p class="mb-0"><code>{{ info.error }}</code></p>
+    </div>
+
+    <h2 class="h5">{{ _("Setting up pg_cron") }}</h2>
+    <ol>
+        <li>
+            {% trans %}Install pg_cron on the PostgreSQL server of the CKAN database, add these settings to <code>postgresql.conf</code> and restart PostgreSQL:{% endtrans %}
+            <pre class="bg-body-tertiary p-2">shared_preload_libraries = 'pg_cron'
+cron.database_name = 'postgres'</pre>
+        </li>
+        <li>
+            {% trans %}Create the extension in the database that <code>cron.database_name</code> names:{% endtrans %}
+            <pre class="bg-body-tertiary p-2">CREATE EXTENSION pg_cron;</pre>
+        </li>
+        <li>
+            {% trans %}Point CKAN at that database, unless it is the CKAN database itself:{% endtrans %}
+            <pre class="bg-body-tertiary p-2">ckanext.cron.database_url = postgresql://ckan_default:pass@localhost/postgres</pre>
+        </li>
+        <li>
+            {% trans %}If CKAN connects as a role that is not a superuser, grant it access to pg_cron:{% endtrans %}
+            <pre class="bg-body-tertiary p-2 text-wrap">GRANT USAGE ON SCHEMA cron TO ckan_default;
+{{ h.cron_grant_statement("ckan_default") }}</pre>
+        </li>
+        <li>
+            {% trans %}Start a worker that executes the runs:{% endtrans %}
+            <pre class="bg-body-tertiary p-2">ckan -c /etc/ckan/default/ckan.ini cron worker</pre>
+        </li>
+    </ol>
+{% endblock %}

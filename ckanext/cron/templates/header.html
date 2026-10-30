@@ -1,0 +1,14 @@
+{% ckan_extends %}
+
+{% block header_account_logged %}
+    {% if h.check_access("cron_manage") %}
+        <li>
+            <a href="{{ h.url_for('cron.jobs') }}" title="{{ _('Cron jobs') }}">
+                <i class="fa fa-clock" aria-hidden="true"></i>
+                <span class="visually-hidden">{{ _("Cron jobs") }}</span>
+            </a>
+        </li>
+    {% endif %}
+
+    {{ super() }}
+{% endblock %}

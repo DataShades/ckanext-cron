@@ -1,0 +1,20 @@
+{% extends "cron/page.html" %}
+
+{% block primary_content_inner %}
+    {% set form_data = form_data or {} %}
+
+    <p class="d-inline-flex gap-1">
+        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#cron-job-form"
+            aria-expanded="{{ 'true' if form_data else 'false' }}" aria-controls="cron-job-form">
+            <i class="fa fa-plus" aria-hidden="true"></i> {{ _("New job") }}
+        </button>
+    </p>
+
+    <div class="collapse {{ 'show' if form_data }}" id="cron-job-form">
+        <div class="card card-body mb-3">
+            {% snippet "cron/job_form.html", data=form_data, errors=form_errors or {}, is_edit=is_edit, info=info %}
+        </div>
+    </div>
+
+    {% snippet "tables/render_table.html", table=table %}
+{% endblock %}
